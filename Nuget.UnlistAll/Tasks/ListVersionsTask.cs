@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Nuget.UnlistAll.Api;
 using Nuget.UnlistAll.Configuration;
 using Nuget.UnlistAll.Models;
@@ -22,8 +23,8 @@ namespace Nuget.UnlistAll.Tasks
 
             NotifyLog(true, Strings.ListVersionsBegin, packageId);
             var response = new NugetApi(Config).GetIndex();
-            var result = response.Versions.Select(x => new PackageVersion(packageId, x, true))
-                .ToArray();
+            var result = response.SelectMany(x => x.Versions.Where(c=> c.Version.Contains( Config.PackageVersion)).Select(v=> new PackageVersion(x.Id, v.Version))).Distinct().ToArray();
+
             NotifyLog(true, Strings.ListVersionsFinished, packageId, result.Length);
             return result;
         }

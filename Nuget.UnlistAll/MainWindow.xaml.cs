@@ -16,6 +16,7 @@ using System.Windows.Media;
 using Nuget.UnlistAll.Configuration;
 using Nuget.UnlistAll.Dialogs;
 using Nuget.UnlistAll.Resources;
+using DevExpress.Xpf.Grid;
 
 namespace Nuget.UnlistAll
 {
@@ -46,6 +47,7 @@ namespace Nuget.UnlistAll
 
             _versions = new ObservableCollection<PackageVersion>();
             versionList.ItemsSource = _versions;
+             
 
             _logs = new ObservableCollection<LogItem>();
             logList.ItemsSource = _logs;
@@ -53,26 +55,24 @@ namespace Nuget.UnlistAll
             var parameters = AppConfig.Load();
             txtPackageId.Text = parameters.PackageId;
             txtApiKey.Text = parameters.ApiKey;
+            txtSource.Text = parameters.Source;
         }
 
         private void OnSelectAll(object sender, RoutedEventArgs e)
         {
-            // Select all versions
-            foreach (var version in _versions)
-                version.Selected = true;
+            versionList.SelectAll();
         }
 
         private void OnSelectNone(object sender, RoutedEventArgs e)
         {
-            // Select none version
-            foreach (var version in _versions)
-                version.Selected = false;
+            versionList.UnselectAll();
         }
 
         private AppConfig ValidateParams()
         {
             // Collect user input parameters and validate
-            var parameters = new AppConfig(txtPackageId.Text.Trim(), txtApiKey.Text.Trim());
+            var parameters = new AppConfig(txtPackageId.Text.Trim(), txtApiKey.Text.Trim(), txtSource.Text.Trim());
+            parameters.PackageVersion = txtPackageVersion.Text?.Trim();
             parameters.Validate();
             parameters.Save();
             return parameters;
@@ -111,7 +111,7 @@ namespace Nuget.UnlistAll
             try
             {
                 var parameters = ValidateParams();;
-                var versions = _versions.Where(x => x.Selected).ToArray();
+                var versions = versionList.SelectedItems.OfType< PackageVersion >().ToArray();
                 if (versions.Length == 0)
                     throw new ValidationException(Strings.SelectVersions);
                 string msg = string.Format(Strings.ConfirmUnlist, versions.Length, parameters.PackageId);

@@ -10,17 +10,20 @@ namespace Nuget.UnlistAll.Configuration
     /// </summary>
     public class AppConfig
     {
-        public AppConfig(string packageId, string apiKey)
+        public AppConfig(string packageId, string apiKey, string source)
         {
             this.PackageId = packageId;
             this.ApiKey = apiKey;
+            Source = source;
         }
 
         [Required(ErrorMessage = Strings.PackageIdRequired)]
-        public string PackageId { get; private set; }
+        public string PackageId { get; set; }
+        public string PackageVersion { get; set; }
 
         [Required(ErrorMessage = Strings.ApiKeyRequired)]
-        public string ApiKey { get; private set; }
+        public string ApiKey { get; set; } 
+        public string Source { get; }
 
         public void Validate()
         {
@@ -33,7 +36,8 @@ namespace Nuget.UnlistAll.Configuration
             var config = LoadConfig();
             var packageId = GetAppSetting(config, "nuget.packageId");
             var apiKey = GetAppSetting(config, "nuget.apiKey");
-            return new AppConfig(packageId, apiKey);
+            var source = GetAppSetting(config, "nuget.source");
+            return new AppConfig(packageId, apiKey, source);
         }
 
         public void Save()
@@ -41,6 +45,7 @@ namespace Nuget.UnlistAll.Configuration
             var config = LoadConfig();
             SetAppSetting(config, "nuget.packageId", PackageId);
             SetAppSetting(config, "nuget.apiKey", ApiKey);
+            SetAppSetting(config, "nuget.source", Source);
             config.Save();
         }
 

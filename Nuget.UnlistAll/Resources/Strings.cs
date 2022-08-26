@@ -10,7 +10,7 @@
 
         public const string PackageIdRequired = "Package ID should not be empty";
 
-        public const string ApiKeyRequired = "API Key should not be empty";
+        public const string ApiKeyRequired = "API Key should not be empty"; 
 
         public const string ListVersionsBegin = "List versions for package {0} begin...";
 

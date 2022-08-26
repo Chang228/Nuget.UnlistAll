@@ -5,6 +5,9 @@ using System.Diagnostics;
 using Nuget.UnlistAll.Configuration;
 using Nuget.UnlistAll.Resources;
 using Shuhari.Framework.Utils;
+using System.Linq;
+using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 namespace Nuget.UnlistAll.Tasks
 {
@@ -25,16 +28,20 @@ namespace Nuget.UnlistAll.Tasks
             // Inn developing mode, the .exe layout in bin\[Debug|Release], while 
             // when packaged by nuget the .exe are copied together with nuget.exe.
             // The task should support either case.
-            var nugetPath = FindNugetPaths(@".\nuget.exe",
-                @"..\..\..\packages\NuGet.CommandLine.4.1.0\tools\nuget.exe");
-            if (nugetPath == null)
-                throw new FileNotFoundException(Strings.NugetNotFound);
-            NotifyLog(true, Strings.NugetFound, nugetPath);
-
-            foreach (var version in _versions)
+            //var nugetPath = FindNugetPaths(@".\nuget.exe",
+            //    @"..\..\..\packages\NuGet.CommandLine.4.1.0\tools\nuget.exe");
+            //if (nugetPath == null)
+            //    throw new FileNotFoundException(Strings.NugetNotFound);
+            //NotifyLog(true, Strings.NugetFound, nugetPath);
+            Parallel.ForEach(_versions, new ParallelOptions { MaxDegreeOfParallelism = 10 }, version =>
             {
-                var cmdArgs = $"delete {version.PackageId} {version.Version} -ApiKey {Config.ApiKey} -Source https://api.nuget.org/v3/index.json -NonInteractive";
-                var psi = new ProcessStartInfo(nugetPath, cmdArgs)
+                var src = this.Config.Source;
+                if (string.IsNullOrEmpty(src))
+                {
+                    src = "https://api.nuget.org/";
+                }
+                var cmdArgs = $"delete {version.PackageId} {version.Version} -ApiKey {Config.ApiKey} -Source {src} -NonInteractive";
+                var psi = new ProcessStartInfo("nuget", cmdArgs)
                 {
                     RedirectStandardOutput = true,
                     WorkingDirectory = Directory.GetCurrentDirectory(),
@@ -44,9 +51,10 @@ namespace Nuget.UnlistAll.Tasks
                 var process = Process.Start(psi);
                 process.WaitForExit();
                 var output = process.StandardOutput.ReadToEnd();
-                NotifyLog(true, Strings.UnlistResult, 
+                NotifyLog(true, Strings.UnlistResult,
                     version.PackageId, version.Version, output);
-            }
+            });
+             
             return null;
         }
 
